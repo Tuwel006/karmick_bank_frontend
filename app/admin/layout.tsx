@@ -15,6 +15,31 @@ const drawerWidth = 80;
 const theme = createTheme({
   typography: {
     fontFamily: 'Inter, Arial, sans-serif',
+    fontSize: 12,
+    h4: { fontSize: '1.5rem' },
+    h6: { fontSize: '1rem' },
+    caption: { fontSize: '0.7rem' },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontSize: '0.75rem',
+          padding: '4px 8px',
+          minHeight: '28px',
+          textTransform: 'none',
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontSize: '0.8rem',
+          minHeight: '32px',
+        },
+      },
+    },
+   
   },
 });
 
@@ -37,7 +62,7 @@ export default function AdminLayout({
   return (
     <ThemeProvider theme={theme}>
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: colors.Primary }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' }}>
         <Toolbar>
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             Admin Dashboard
