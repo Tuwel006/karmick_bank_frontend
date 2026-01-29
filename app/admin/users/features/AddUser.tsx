@@ -76,7 +76,7 @@ export default function AddUser() {
                     overflow: 'hidden'
                 }}>
                     <Box sx={{ 
-                        background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                        background: '#2a2741',
                         p: 3,
                         color: 'white',
                         display: 'flex',
@@ -150,9 +150,9 @@ export default function AddUser() {
                                     mt: 2, 
                                     py: 1.5, 
                                     borderRadius: 2,
-                                    background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                                    background: '#2a2741',
                                     '&:hover': {
-                                        background: 'linear-gradient(135deg, #1565c0 0%, #1e88e5 100%)'
+                                        background: '#1f1e35'
                                     }
                                 }}
                             >

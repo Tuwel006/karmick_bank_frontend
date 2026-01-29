@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, Divider } from '@mui/material';
 import AddUser from './features/AddUser';
 
 export default function UsersPage() {
@@ -10,6 +10,7 @@ export default function UsersPage() {
                 <Typography variant="h4">Users</Typography>
                 <AddUser />
             </Box>
+            <Divider sx={{ mb: 3 }} />
         </Box>
     );
 }

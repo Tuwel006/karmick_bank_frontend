@@ -95,7 +95,7 @@ export default function LoginPage() {
           width: 450
         }}>
           <Box sx={{
-            background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+            background: '#2a2741',
             p: 3,
             color: 'white',
             textAlign: 'center'
@@ -149,12 +149,12 @@ export default function LoginPage() {
                 sx={{
                   py: 1.5,
                   borderRadius: 2,
-                  background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+                  background: '#2a2741',
                   fontSize: '1rem',
                   fontWeight: 600,
                   textTransform: 'none',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #1565c0 0%, #1e88e5 100%)'
+                    background: '#1f1e35'
                   }
                 }}
               >

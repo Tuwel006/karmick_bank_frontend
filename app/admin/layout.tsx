@@ -5,6 +5,7 @@ import { People } from '@mui/icons-material';
 import { colors } from './colors';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const sidebarItems = [
   { icon: <People />, text: 'Users', link: '/admin/users' },
@@ -59,10 +60,16 @@ export default function AdminLayout({
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    router.push('/auth/login');
+  };
   return (
+    <ProtectedRoute requiredRole="admin">
     <ThemeProvider theme={theme}>
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)' }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, background:colors.Primary }}>
         <Toolbar>
           <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
             Admin Dashboard
@@ -80,7 +87,7 @@ export default function AdminLayout({
           >
             <MenuItem onClick={handleClose}>Edit Profile</MenuItem>
             <MenuItem onClick={handleClose}>Change Password</MenuItem>
-            <MenuItem onClick={handleClose}>Logout</MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </Menu>
         </Toolbar>
       </AppBar>
@@ -118,5 +125,6 @@ export default function AdminLayout({
       </Box>
     </Box>
     </ThemeProvider>
+    </ProtectedRoute>
   );
 }
