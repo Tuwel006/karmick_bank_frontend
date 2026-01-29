@@ -1,9 +1,9 @@
- const Page =()=>{
-    return(
-         <>
-         hi
-    </>
+const Page = () => {
+    return (
+        <>
+            
+        </>
     )
-   
+
 }
 export default Page
