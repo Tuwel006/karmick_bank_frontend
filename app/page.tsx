@@ -107,8 +107,8 @@ export default function LandingPage() {
                 aspectRatio: '1/1'
               }}>
                 <Image
-                  src="/banking_hero_banner_1769768195406.png"
-                  alt="banking hero"
+                  src="/hero_banking.png"
+                  alt="Premium Banking"
                   fill
                   style={{ objectFit: 'cover' }}
                 />

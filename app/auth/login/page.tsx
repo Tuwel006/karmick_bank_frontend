@@ -1,7 +1,7 @@
 'use client';
 
-import { Box, TextField, Button, Typography, Paper, Container, Stack } from '@mui/material';
-import { AccountBalance, Security } from '@mui/icons-material';
+import { Box, TextField, Button, Typography, Paper, Container, Stack, InputAdornment, IconButton } from '@mui/material';
+import { AccountBalance, Security, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { useRouter } from 'next/navigation';
 import * as Yup from 'yup';
@@ -18,6 +18,7 @@ const validationSchema = Yup.object({
 export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -147,13 +148,27 @@ export default function LoginPage() {
                 fullWidth
                 name="password"
                 label="Transaction Password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 size="small"
                 value={formik.values.password}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.password && Boolean(formik.errors.password)}
                 helperText={formik.touched.password && formik.errors.password}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        size="small"
+                      >
+                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
