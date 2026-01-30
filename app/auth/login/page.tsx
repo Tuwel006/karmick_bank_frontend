@@ -1,6 +1,7 @@
 'use client';
 
-import { Box, TextField, Button, Typography, Paper, Container } from '@mui/material';
+import { Box, TextField, Button, Typography, Paper, Container, Stack } from '@mui/material';
+import { AccountBalance, Security } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import { useRouter } from 'next/navigation';
 import * as Yup from 'yup';
@@ -24,7 +25,7 @@ export default function LoginPage() {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const currentTime = Date.now() / 1000;
-        
+
         if (payload.exp > currentTime) {
           const role = payload.role;
           if (role === 'admin') {
@@ -55,16 +56,16 @@ export default function LoginPage() {
       try {
         const response = await loginUser(values.email, values.password);
         console.log(response);
-        
+
         toast.success('Login successful');
         localStorage.setItem('token', (response as any).access_token);
-        
+
         const userRole = (response as any).user?.role;
         if (userRole === 'admin') {
           router.push('/admin');
-        } else{
+        } else {
           router.push('/user');
-        } 
+        }
       } catch (error: any) {
         const errorMessage = error?.response?.data?.message || 'Login failed';
         toast.error(errorMessage);
@@ -84,85 +85,118 @@ export default function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: '#f5f5f5'
+      bgcolor: '#f4f6f8',
+      backgroundImage: 'linear-gradient(135deg, #f4f6f8 0%, #e3e8ed 100%)',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
-      <Container maxWidth="sm">
-        <Paper sx={{
-          p: 0,
-          borderRadius: 3,
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
-          overflow: 'hidden',
-          width: 450
-        }}>
-          <Box sx={{
-            background: '#2a2741',
-            p: 3,
-            color: 'white',
-            textAlign: 'center'
+      {/* Decorative Brand Shapes */}
+      <Box sx={{ position: 'absolute', top: -150, right: -150, width: 500, height: 500, borderRadius: '50%', bgcolor: 'primary.main', opacity: 0.03 }} />
+      <Box sx={{ position: 'absolute', bottom: -100, left: -100, width: 300, height: 300, borderRadius: '50%', bgcolor: 'primary.main', opacity: 0.05 }} />
+
+      <Container maxWidth="xs" sx={{ position: 'relative', zIndex: 1 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            border: '1px solid #e0e4e8',
+            boxShadow: '0 12px 24px rgba(0,0,0,0.05)',
+            bgcolor: 'white'
           }}>
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>
-              Welcome Back
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Box
+              sx={{
+                width: 54,
+                height: 54,
+                borderRadius: 1,
+                bgcolor: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                margin: '0 auto',
+                mb: 2,
+                boxShadow: '0 4px 10px rgba(40,0,113,0.2)'
+              }}
+            >
+              <AccountBalance sx={{ fontSize: 32 }} />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: 'primary.main', mb: 1 }}>
+              Secure Login
             </Typography>
-            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Sign in to your account
+            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, letterSpacing: 1 }}>
+              INTERNET BANKING PORTAL
             </Typography>
           </Box>
 
-          <Box sx={{ p: 4 }}>
-            <Box component="form" onSubmit={formik.handleSubmit}>
+          <Box component="form" onSubmit={formik.handleSubmit}>
+            <Stack spacing={2.5}>
               <TextField
                 fullWidth
                 name="email"
-                label={<>Email <span style={{ color: 'red' }}>*</span></>}
+                label="Registered Email"
+                size="small"
                 value={formik.values.email}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.email && Boolean(formik.errors.email)}
                 helperText={formik.touched.email && formik.errors.email}
-                variant="outlined"
-                sx={{
-                  mb: 3,
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 }
-                }}
               />
               <TextField
                 fullWidth
                 name="password"
-                label={<>Password <span style={{ color: 'red' }}>*</span></>}
+                label="Transaction Password"
                 type="password"
+                size="small"
                 value={formik.values.password}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.password && Boolean(formik.errors.password)}
                 helperText={formik.touched.password && formik.errors.password}
-                variant="outlined"
-                sx={{
-                  mb: 4,
-                  '& .MuiOutlinedInput-root': { borderRadius: 2 }
-                }}
               />
+
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Typography variant="caption" sx={{ color: 'primary.main', cursor: 'pointer', fontWeight: 700 }}>
+                  Forgot Password?
+                </Typography>
+              </Box>
+
               <Button
                 type="submit"
                 variant="contained"
                 fullWidth
                 disabled={isLoading}
                 sx={{
-                  py: 1.5,
-                  borderRadius: 2,
-                  background: '#2a2741',
-                  fontSize: '1rem',
-                  fontWeight: 600,
+                  py: 1.2,
+                  borderRadius: 1.5,
+                  fontSize: '0.9rem',
+                  fontWeight: 700,
                   textTransform: 'none',
+                  bgcolor: 'primary.main',
+                  boxShadow: '0 4px 12px rgba(40,0,113,0.3)',
                   '&:hover': {
-                    background: '#1f1e35'
+                    bgcolor: '#1e0055',
+                    boxShadow: '0 6px 16px rgba(40,0,113,0.4)'
                   }
                 }}
               >
-                {isLoading ? 'Signing In...' : 'Sign In'}
+                {isLoading ? 'Authenticating...' : 'Login Securely'}
               </Button>
-            </Box>
+
+              <Typography variant="caption" textAlign="center" color="text.secondary" sx={{ mt: 2 }}>
+                By logging in, you agree to our <br />
+                <span style={{ color: '#280071', fontWeight: 600, cursor: 'pointer' }}>Terms of Service</span> & <span style={{ color: '#280071', fontWeight: 600, cursor: 'pointer' }}>Security Policies</span>
+              </Typography>
+            </Stack>
           </Box>
         </Paper>
+
+        <Box sx={{ mt: 4, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+            <Security sx={{ fontSize: 14 }} /> 128-bit SSL Encrypted Session
+          </Typography>
+        </Box>
       </Container>
     </Box>
   );

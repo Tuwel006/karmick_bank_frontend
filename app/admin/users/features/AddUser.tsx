@@ -63,74 +63,72 @@ export default function AddUser() {
             </Button>
 
             <Modal open={open} onClose={handleClose}>
-                <Box sx={{ 
-                    position: 'absolute', 
-                    top: '50%', 
-                    left: '50%', 
-                    transform: 'translate(-50%, -50%)', 
-                    width: 450, 
-                    bgcolor: 'background.paper', 
-                    p: 0, 
+                <Box sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 450,
+                    bgcolor: 'background.paper',
+                    p: 0,
                     borderRadius: 3,
                     boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
                     overflow: 'hidden'
                 }}>
-                    <Box sx={{ 
-                        background: '#2a2741',
-                        p: 3,
+                    <Box sx={{
+                        bgcolor: 'primary.main',
+                        p: 1.5,
                         color: 'white',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}>
-                        <Typography variant="h5" sx={{ fontWeight: 600 }}>Add New User</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>Add New User</Typography>
                         <IconButton onClick={handleClose} size="small" sx={{ color: 'white' }}>
-                            <Close />
+                            <Close fontSize="small" />
                         </IconButton>
                     </Box>
-                    <Box sx={{ p: 4 }}>
-                        <Stack spacing={3}>
+                    <Box sx={{ p: 3 }}>
+                        <Stack spacing={2}>
                             <TextField
                                 fullWidth
                                 name="username"
                                 label="Username"
+                                size="small"
                                 value={formik.values.username}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
                                 error={formik.touched.username && Boolean(formik.errors.username)}
                                 helperText={formik.touched.username && formik.errors.username}
-                                variant="outlined"
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
                             <TextField
                                 fullWidth
                                 name="email"
                                 label="Email"
+                                size="small"
                                 value={formik.values.email}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
                                 error={formik.touched.email && Boolean(formik.errors.email)}
                                 helperText={formik.touched.email && formik.errors.email}
-                                variant="outlined"
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
                             <TextField
                                 fullWidth
                                 name="password"
                                 label="Password"
                                 type="password"
+                                size="small"
                                 value={formik.values.password}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
                                 error={formik.touched.password && Boolean(formik.errors.password)}
                                 helperText={formik.touched.password && formik.errors.password}
-                                variant="outlined"
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
                             <TextField
                                 fullWidth
                                 name="phone"
                                 label="Phone"
+                                size="small"
                                 value={formik.values.phone}
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
@@ -138,23 +136,13 @@ export default function AddUser() {
                                 inputProps={{ maxLength: 10 }}
                                 error={formik.touched.phone && Boolean(formik.errors.phone)}
                                 helperText={formik.touched.phone && formik.errors.phone}
-                                variant="outlined"
-                                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
-                            <Button 
-                                variant="contained" 
-                                fullWidth 
+                            <Button
+                                variant="contained"
+                                fullWidth
                                 onClick={() => formik.handleSubmit()}
                                 disabled={isLoading}
-                                sx={{ 
-                                    mt: 2, 
-                                    py: 1.5, 
-                                    borderRadius: 2,
-                                    background: '#2a2741',
-                                    '&:hover': {
-                                        background: '#1f1e35'
-                                    }
-                                }}
+                                sx={{ mt: 1 }}
                             >
                                 {isLoading ? 'Creating...' : 'Create User'}
                             </Button>
