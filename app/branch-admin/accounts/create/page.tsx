@@ -267,7 +267,7 @@ export default function CreateAccountPage() {
           emergencyContactRelation: formData.emergencyContactRelation,
           permanentAddress: formData.permanentAddress,
           currentAddress: formData.sameAsPermanent ? formData.permanentAddress : formData.currentAddress,
-          branchId: localStorage.getItem('branchId')
+          branchId: localStorage.getItem('branchId') || JSON.parse(atob(localStorage.getItem('token')?.split('.')[1] || '{}')).branch?.id
         },
         account: {
           accountType: formData.accountType,

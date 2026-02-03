@@ -1,20 +1,94 @@
 'use client';
 
-import { Box, Card, Typography, TextField, Button, Stack, Tabs, Tab, MenuItem, FormControlLabel, Radio, RadioGroup, FormControl, FormLabel, Paper, Divider, Alert, InputAdornment, Grid } from '@mui/material';
+import { Box, Typography, TextField, Button, Stack, Tabs, Tab, MenuItem, Paper, Divider, Alert, InputAdornment, Grid, CircularProgress, FormControl, FormLabel, RadioGroup, Radio } from '@mui/material';
 import {
-    Send,
     Person,
     AccountBalance,
     Info
 } from '@mui/icons-material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { accountService } from '@/services/account.service';
+import { transactionService } from '@/services/transaction.service';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
 
 export default function TransferPage() {
+    const router = useRouter();
     const [tabDetails, setTabDetails] = useState(0);
+    const [accounts, setAccounts] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+
+    const [transferData, setTransferData] = useState({
+        fromAccountId: '',
+        toAccountId: '',
+        amount: '',
+        remarks: '',
+        transferType: 'IMPS' // For external transfer
+    });
+
+    useEffect(() => {
+        fetchAccounts();
+    }, []);
+
+    const fetchAccounts = async () => {
+        try {
+            const data: any = await accountService.getAccounts(); // Adjust if API is different
+            // If the API returns a paginated response or wrapped object, extract the array
+            // Based on previous file views, it seems apiHelper returns response.data directly
+            // But let's be safe. If it is an array use it, else check for data property
+            const accountList = Array.isArray(data) ? data : (data.data || []);
+            setAccounts(accountList);
+            if (accountList.length > 0) {
+                setTransferData(prev => ({ ...prev, fromAccountId: accountList[0].id }));
+            }
+        } catch (error) {
+            console.error('Failed to fetch accounts', error);
+            toast.error('Failed to load your accounts');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
         setTabDetails(newValue);
     };
+
+    const handleTransfer = async () => {
+        if (!transferData.fromAccountId || !transferData.toAccountId || !transferData.amount) {
+            toast.error('Please fill in all required fields');
+            return;
+        }
+
+        const amount = parseFloat(transferData.amount);
+        if (isNaN(amount) || amount <= 0) {
+            toast.error('Please enter a valid amount');
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            await transactionService.transfer({
+                fromAccountId: transferData.fromAccountId,
+                toAccountId: transferData.toAccountId,
+                amount: amount,
+                narration: transferData.remarks || 'Fund Transfer'
+            });
+            toast.success('Transfer successful!');
+            setTransferData(prev => ({ ...prev, toAccountId: '', amount: '', remarks: '' }));
+            router.push('/user'); // Redirect to dashboard to see transaction
+        } catch (error: any) {
+            console.error('Transfer failed', error);
+            const msg = error?.response?.data?.message || 'Transfer failed. Please try again.';
+            toast.error(msg);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loading) {
+        return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
+    }
 
     return (
         <Stack spacing={3}>
@@ -33,53 +107,57 @@ export default function TransferPage() {
                         <Grid size={{ xs: 12, md: 8 }}>
                             <Stack spacing={3} sx={{ maxWidth: 600 }}>
                                 <Alert severity="info" icon={<Info fontSize="small" />} sx={{ py: 0 }}>
-                                    Daily Transaction Limit: ₹ 5,00,000.00 | Available Limit: ₹ 4,80,000.00
+                                    Daily Transaction Limit: ₹ 5,00,000.00
                                 </Alert>
 
                                 <TextField
                                     select
                                     label="Debit Account"
-                                    defaultValue="309871234567"
+                                    value={transferData.fromAccountId}
+                                    onChange={(e) => setTransferData({ ...transferData, fromAccountId: e.target.value })}
                                     fullWidth
-                                    helperText="Savings Account - Bal: ₹ 1,25,000.00"
+                                    helperText={accounts.find(a => a.id === transferData.fromAccountId)?.accountNumber ? `Balance: ₹ ${accounts.find(a => a.id === transferData.fromAccountId)?.balance}` : ''}
                                 >
-                                    <MenuItem value="309871234567">xxxx1234567 - Savings Account</MenuItem>
-                                    <MenuItem value="789012345678">xxxx12345678 - Current Account</MenuItem>
+                                    {accounts.map((account: any) => (
+                                        <MenuItem key={account.id} value={account.id}>
+                                            {account.accountNumber} - {account.accountType}
+                                        </MenuItem>
+                                    ))}
+                                    {accounts.length === 0 && <MenuItem disabled>No accounts found</MenuItem>}
                                 </TextField>
 
                                 <Divider />
 
                                 <Typography variant="subtitle2" fontWeight="bold">Beneficiary Details</Typography>
 
-                                <TextField
-                                    select
-                                    label="Select Beneficiary"
-                                    defaultValue=""
-                                    fullWidth
-                                >
-                                    <MenuItem value="">-- Select --</MenuItem>
-                                    <MenuItem value="ben1">Alice Smith (xxxx8901)</MenuItem>
-                                    <MenuItem value="ben2">Bob Jones (xxxx2345)</MenuItem>
-                                </TextField>
-
-                                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                                    <Divider sx={{ flex: 1 }}>OR</Divider>
-                                    <Typography variant="caption">Quick Pay (Without Adding Beneficiary)</Typography>
-                                    <Divider sx={{ flex: 1 }} />
-                                </Box>
-
-                                <TextField
-                                    label="Beneficiary Account Number"
-                                    fullWidth
-                                    required
-                                />
-                                {tabDetails === 1 && (
-                                    <TextField
-                                        label="IFSC Code"
-                                        fullWidth
-                                        required
-                                        placeholder="e.g., SBIN0001234"
-                                    />
+                                {tabDetails === 0 ? (
+                                    <>
+                                        <TextField
+                                            label="Beneficiary Account ID (Within Bank)"
+                                            fullWidth
+                                            required
+                                            value={transferData.toAccountId}
+                                            onChange={(e) => setTransferData({ ...transferData, toAccountId: e.target.value })}
+                                            placeholder="Enter destination account ID (UUID)"
+                                            helperText="For testing, copy an Account ID from Admin or create another account."
+                                        />
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* External Transfer UI Placeholder - Backend might not support yet */}
+                                        <Alert severity="warning">External transfers are currently simulated.</Alert>
+                                        <TextField
+                                            label="Beneficiary Account Number"
+                                            fullWidth
+                                            required
+                                        />
+                                        <TextField
+                                            label="IFSC Code"
+                                            fullWidth
+                                            required
+                                            placeholder="e.g., SBIN0001234"
+                                        />
+                                    </>
                                 )}
 
                                 <Divider />
@@ -91,6 +169,8 @@ export default function TransferPage() {
                                     fullWidth
                                     required
                                     type="number"
+                                    value={transferData.amount}
+                                    onChange={(e) => setTransferData({ ...transferData, amount: e.target.value })}
                                     InputProps={{
                                         startAdornment: <InputAdornment position="start">₹</InputAdornment>,
                                     }}
@@ -100,12 +180,19 @@ export default function TransferPage() {
                                     label="Remarks"
                                     fullWidth
                                     size="small"
+                                    value={transferData.remarks}
+                                    onChange={(e) => setTransferData({ ...transferData, remarks: e.target.value })}
                                 />
 
                                 {tabDetails === 1 && (
                                     <FormControl>
                                         <FormLabel id="transfer-type-group">Transfer Type</FormLabel>
-                                        <RadioGroup row aria-labelledby="transfer-type-group" defaultValue="IMPS">
+                                        <RadioGroup
+                                            row
+                                            aria-labelledby="transfer-type-group"
+                                            value={transferData.transferType}
+                                            onChange={(e) => setTransferData({ ...transferData, transferType: e.target.value })}
+                                        >
                                             <FormControlLabel value="IMPS" control={<Radio size="small" />} label="IMPS (Instant)" />
                                             <FormControlLabel value="NEFT" control={<Radio size="small" />} label="NEFT" />
                                             <FormControlLabel value="RTGS" control={<Radio size="small" />} label="RTGS (> 2 Lakhs)" />
@@ -114,8 +201,23 @@ export default function TransferPage() {
                                 )}
 
                                 <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                                    <Button variant="contained" size="medium" sx={{ minWidth: 120 }}>Proceed</Button>
-                                    <Button variant="outlined" size="medium">Reset</Button>
+                                    <Button
+                                        variant="contained"
+                                        size="medium"
+                                        sx={{ minWidth: 120 }}
+                                        onClick={handleTransfer}
+                                        disabled={submitting || accounts.length === 0}
+                                    >
+                                        {submitting ? 'Processing...' : 'Proceed'}
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        size="medium"
+                                        onClick={() => setTransferData(prev => ({ ...prev, toAccountId: '', amount: '', remarks: '' }))}
+                                        disabled={submitting}
+                                    >
+                                        Reset
+                                    </Button>
                                 </Stack>
                             </Stack>
                         </Grid>
