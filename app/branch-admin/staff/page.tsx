@@ -84,7 +84,7 @@ export default function StaffPage() {
           branchId: localStorage.getItem('branchId')
         })
       });
-      
+
       if (response.ok) {
         fetchStaff();
         setOpenDialog(false);
@@ -143,8 +143,8 @@ export default function StaffPage() {
                 <TableCell>{member.email}</TableCell>
                 <TableCell>{member.phone}</TableCell>
                 <TableCell>
-                  <Chip 
-                    label={member.roleEntity.name.replace('_', ' ').toUpperCase()} 
+                  <Chip
+                    label={member.roleEntity.name.replace('_', ' ').toUpperCase()}
                     color={getRoleColor(member.roleEntity.name)}
                     size="small"
                   />
@@ -174,7 +174,7 @@ export default function StaffPage() {
         <DialogTitle>Add New Staff Member</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="First Name"
                 value={formData.firstName}
@@ -183,7 +183,7 @@ export default function StaffPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Last Name"
                 value={formData.lastName}
@@ -192,7 +192,7 @@ export default function StaffPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 label="Email"
                 type="email"
@@ -202,7 +202,7 @@ export default function StaffPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Phone"
                 value={formData.phone}
@@ -211,7 +211,7 @@ export default function StaffPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Password"
                 type="password"
@@ -221,7 +221,7 @@ export default function StaffPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControl fullWidth>
                 <InputLabel>Role</InputLabel>
                 <Select

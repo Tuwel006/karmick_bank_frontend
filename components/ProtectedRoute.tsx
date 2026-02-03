@@ -6,7 +6,7 @@ import Loading from '@/components/Loading';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'admin' | 'customer';
+  requiredRole?: 'super_admin' | 'branch_admin' | 'customer';
 }
 
 export default function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   useEffect(() => {
     const checkToken = () => {
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         router.push('/auth/login');
         return;
@@ -26,14 +26,16 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const currentTime = Date.now() / 1000;
-        
+
         if (payload.exp <= currentTime) {
           localStorage.removeItem('token');
           router.push('/auth/login');
           return;
         }
 
-        if (requiredRole && payload.role !== requiredRole) {
+        const userRole = typeof payload.role === 'object' ? payload.role.name : payload.role;
+
+        if (requiredRole && userRole !== requiredRole) {
           router.push('/auth/login');
           return;
         }
@@ -48,10 +50,10 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     };
 
     checkToken();
-    
+
     // Check token expiration every 30 seconds
     const interval = setInterval(checkToken, 30000);
-    
+
     return () => clearInterval(interval);
   }, [router, requiredRole]);
 

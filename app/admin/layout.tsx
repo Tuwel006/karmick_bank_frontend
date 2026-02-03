@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, AppBar, Toolbar, Drawer, Typography, Avatar, Menu, MenuItem, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery, CssBaseline } from '@mui/material';
+import { Box, AppBar, Toolbar, Drawer, Typography, Avatar, Menu, MenuItem, IconButton, List, ListItem, ListItemButton, ListItemIcon, ListItemText, useTheme, useMediaQuery, CssBaseline, Divider } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -16,6 +16,7 @@ import {
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { authService } from '@/services/auth.service';
 
 const sidebarItems = [
   { icon: <DashboardIcon fontSize="small" />, text: 'Dashboard', link: '/admin' },
@@ -54,8 +55,7 @@ export default function AdminLayout({
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/auth/login');
+    authService.logout();
   };
 
   const drawer = (
@@ -122,7 +122,7 @@ export default function AdminLayout({
   );
 
   return (
-    <ProtectedRoute requiredRole="admin">
+    <ProtectedRoute requiredRole="super_admin">
       <Box sx={{ display: 'flex', bgcolor: '#f4f6f8', minHeight: '100vh' }}>
         <CssBaseline />
         <AppBar
@@ -217,4 +217,3 @@ export default function AdminLayout({
     </ProtectedRoute>
   );
 }
-import { Divider } from '@mui/material';

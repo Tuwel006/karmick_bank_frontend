@@ -11,6 +11,7 @@ import {
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { authService } from '@/services/auth.service';
 
 const navigationItems = [
     { text: 'My Accounts', link: '/user' },
@@ -39,8 +40,7 @@ export default function UserLayout({
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        router.push('/auth/login');
+        authService.logout();
     };
 
     const currentTab = navigationItems.findIndex(item => item.link === pathname) !== -1

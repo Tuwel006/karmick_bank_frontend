@@ -82,7 +82,7 @@ export default function AccountsPage() {
     const totalBalance = accountsData.reduce((sum, acc) => sum + parseFloat(acc.balance), 0);
     const activeAccounts = accountsData.filter(acc => acc.status === 'ACTIVE').length;
     const pendingKyc = accountsData.filter(acc => acc.customer.kycStatus === 'PENDING').length;
-    
+
     setStats({
       totalAccounts: accountsData.length,
       totalBalance: totalBalance.toFixed(2),
@@ -101,7 +101,7 @@ export default function AccountsPage() {
         },
         body: JSON.stringify({ status })
       });
-      
+
       if (response.ok) {
         fetchAccounts();
       }
@@ -144,7 +144,7 @@ export default function AccountsPage() {
 
       {/* Stats Cards */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom variant="body2">
@@ -156,7 +156,7 @@ export default function AccountsPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom variant="body2">
@@ -168,7 +168,7 @@ export default function AccountsPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom variant="body2">
@@ -180,7 +180,7 @@ export default function AccountsPage() {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography color="textSecondary" gutterBottom variant="body2">
@@ -229,7 +229,7 @@ export default function AccountsPage() {
                       </Box>
                     </Box>
                   </TableCell>
-                  
+
                   <TableCell>
                     <Box>
                       <Typography variant="subtitle2" sx={{ fontFamily: 'monospace' }}>
@@ -240,51 +240,51 @@ export default function AccountsPage() {
                       </Typography>
                     </Box>
                   </TableCell>
-                  
+
                   <TableCell>
                     <Typography variant="h6" color="primary">
                       ₹{account.balance}
                     </Typography>
                   </TableCell>
-                  
+
                   <TableCell>
-                    <Chip 
-                      label={account.status} 
+                    <Chip
+                      label={account.status}
                       color={getStatusColor(account.status)}
                       size="small"
                     />
                   </TableCell>
-                  
+
                   <TableCell>
-                    <Chip 
-                      label={account.customer.kycStatus} 
+                    <Chip
+                      label={account.customer.kycStatus}
                       color={getKycStatusColor(account.customer.kycStatus)}
                       size="small"
                     />
                   </TableCell>
-                  
+
                   <TableCell>
                     <Typography variant="body2">
                       {new Date(account.createdAt).toLocaleDateString()}
                     </Typography>
                   </TableCell>
-                  
+
                   <TableCell>
                     <Box display="flex" gap={1}>
                       <IconButton size="small" color="primary">
                         <Visibility />
                       </IconButton>
                       {account.status === 'ACTIVE' ? (
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           color="error"
                           onClick={() => updateAccountStatus(account.id, 'FROZEN')}
                         >
                           <Block />
                         </IconButton>
                       ) : (
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           color="success"
                           onClick={() => updateAccountStatus(account.id, 'ACTIVE')}
                         >

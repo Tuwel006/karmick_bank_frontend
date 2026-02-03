@@ -5,7 +5,7 @@ import { AccountBalance, Security, Visibility, VisibilityOff } from '@mui/icons-
 import { useFormik } from 'formik';
 import { useRouter } from 'next/navigation';
 import * as Yup from 'yup';
-import { loginUser } from './services/authService';
+import { authService } from '@/services/auth.service';
 import { toast } from 'react-toastify';
 import { useEffect, useState } from 'react';
 import Loading from '@/components/Loading';
@@ -28,11 +28,14 @@ export default function LoginPage() {
         const currentTime = Date.now() / 1000;
 
         if (payload.exp > currentTime) {
-          const role = payload.role;
-          if (role === 'admin') {
+          const userRole = typeof payload.role === 'object' ? payload.role.name : payload.role;
+          if (userRole === 'super_admin') {
             router.push('/admin');
             return;
-          } else {
+          } else if (userRole === 'branch_admin') {
+            router.push('/branch-admin');
+            return;
+          } else if (userRole === 'customer') {
             router.push('/user');
             return;
           }
@@ -55,15 +58,21 @@ export default function LoginPage() {
     onSubmit: async (values) => {
       setIsLoading(true);
       try {
-        const response = await loginUser(values.email, values.password);
+        const response = await authService.login(values);
         console.log(response);
 
         toast.success('Login successful');
-        localStorage.setItem('token', (response as any).access_token);
+        const token = (response as any).access_token;
+        localStorage.setItem('token', token);
 
-        const userRole = (response as any).user?.role;
-        if (userRole === 'admin') {
+        // Decode token to get role
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userRole = typeof payload.role === 'object' ? payload.role.name : payload.role;
+
+        if (userRole === 'super_admin') {
           router.push('/admin');
+        } else if (userRole === 'branch_admin') {
+          router.push('/branch-admin');
         } else {
           router.push('/user');
         }

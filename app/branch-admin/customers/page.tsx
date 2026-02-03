@@ -86,7 +86,7 @@ export default function CustomersPage() {
           branchId: localStorage.getItem('branchId')
         })
       });
-      
+
       if (response.ok) {
         fetchCustomers();
         setOpenDialog(false);
@@ -151,8 +151,8 @@ export default function CustomersPage() {
                 <TableCell>{customer.email}</TableCell>
                 <TableCell>{customer.phone}</TableCell>
                 <TableCell>
-                  <Chip 
-                    label={customer.kycStatus || 'PENDING'} 
+                  <Chip
+                    label={customer.kycStatus || 'PENDING'}
                     color={getKycStatusColor(customer.kycStatus)}
                     size="small"
                   />
@@ -179,7 +179,7 @@ export default function CustomersPage() {
         <DialogTitle>Add New Customer</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="First Name"
                 value={formData.firstName}
@@ -188,7 +188,7 @@ export default function CustomersPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Last Name"
                 value={formData.lastName}
@@ -197,7 +197,7 @@ export default function CustomersPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Email"
                 type="email"
@@ -207,7 +207,7 @@ export default function CustomersPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Phone"
                 value={formData.phone}
@@ -216,36 +216,36 @@ export default function CustomersPage() {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 label="Address Line 1"
                 value={formData.address.addressLine1}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
+                onChange={(e) => setFormData({
+                  ...formData,
                   address: { ...formData.address, addressLine1: e.target.value }
                 })}
                 fullWidth
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="City"
                 value={formData.address.city}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
+                onChange={(e) => setFormData({
+                  ...formData,
                   address: { ...formData.address, city: e.target.value }
                 })}
                 fullWidth
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Pincode"
                 value={formData.address.pincode}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
+                onChange={(e) => setFormData({
+                  ...formData,
                   address: { ...formData.address, pincode: e.target.value }
                 })}
                 fullWidth

@@ -43,43 +43,55 @@ import {
   VerifiedUser,
   AccountBalanceWallet
 } from '@mui/icons-material';
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-
-const userProfile = {
-  name: 'John Doe',
-  customerID: 'CU-88901234',
-  email: 'john.doe@email.com',
-  phone: '+91 98765 43210',
-  lastLogin: '30 Jan 2026, 14:10 IST',
-  kycStatus: 'Verified'
-};
-
-const accounts = [
-  {
-    id: 1,
-    type: 'Savings Account',
-    number: '309871234567',
-    branch: 'Kolkata Main',
-    balance: '1,25,000.00',
-    currency: '₹',
-    status: 'Active',
-    income: '24,000',
-    expense: '12,500'
-  }
-];
-
-const transactions = [
-  { id: 1, date: '30-Jan-2026', desc: 'UPI/P2P/9876543210/Dinner', ref: 'Ref123456', debit: '1,200.00', credit: '', balance: '1,23,800.00', status: 'Success' },
-  { id: 2, date: '29-Jan-2026', desc: 'NEFT Credit/Salary/Jan 2026', ref: 'Ref987654', debit: '', credit: '85,000.00', balance: '1,25,000.00', status: 'Success' },
-  { id: 3, date: '28-Jan-2026', desc: 'ATM Wdl/Kolkata/ATM01', ref: 'Ref456789', debit: '2,000.00', credit: '', balance: '40,000.00', status: 'Success' },
-  { id: 4, date: '25-Jan-2026', desc: 'POS/Amazon Retail/Mumbai', ref: 'Ref112233', debit: '1,500.00', credit: '', balance: '42,000.00', status: 'Success' },
-  { id: 5, date: '20-Jan-2026', desc: 'Interest Credit', ref: 'KB-INT-99', debit: '', credit: '1,200.00', balance: '43,500.00', status: 'Success' },
-];
+import { customerService } from '@/services/customer.service';
+import { accountService } from '@/services/account.service';
+import { transactionService } from '@/services/transaction.service';
+import { toast } from 'react-toastify';
 
 export default function UserDashboard() {
   const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [userAccounts, setUserAccounts] = useState<any[]>([]);
+  const [userTransactions, setUserTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const customerId = payload.customerId;
+
+        if (!customerId) {
+          toast.error('Customer profile not associated with this user');
+          setLoading(false);
+          return;
+        }
+
+        const [profileRes, accountsRes, transactionsRes] = await Promise.all([
+          customerService.getCustomerById(customerId),
+          accountService.getAccounts({ customerId }),
+          transactionService.getTransactions({ customerId, limit: 10 })
+        ]);
+
+        setProfile(profileRes.data);
+        setUserAccounts(accountsRes.data.data || []);
+        setUserTransactions(transactionsRes.data.data || []);
+      } catch (error) {
+        console.error('Failed to fetch user data', error);
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handlePrint = () => {
     const printContent = printRef.current;
@@ -99,6 +111,15 @@ export default function UserDashboard() {
     }
   };
 
+  const primaryAccount = userAccounts[0] || {
+    balance: '0.00',
+    currency: '₹',
+    accountNumber: 'N/A',
+    accountType: 'N/A'
+  };
+
+  if (loading) return <LinearProgress />;
+
   return (
     <Stack spacing={4}>
       {/* Header Profile Section */}
@@ -117,12 +138,12 @@ export default function UserDashboard() {
               </Avatar>
             </Grid>
             <Grid size={{ xs: 12, md: 'grow' }}>
-              <Typography variant="h4" fontWeight="800">Welcome, {userProfile.name}</Typography>
+              <Typography variant="h4" fontWeight="800">Welcome, {profile?.firstName || 'User'}</Typography>
               <Stack direction="row" spacing={3} sx={{ mt: 1, opacity: 0.9 }}>
                 <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <VerifiedUser fontSize="small" sx={{ color: '#4caf50' }} /> Customer ID: {userProfile.customerID}
+                  <VerifiedUser fontSize="small" sx={{ color: '#4caf50' }} /> Customer ID: {profile?.customerNumber || 'N/A'}
                 </Typography>
-                <Typography variant="body2">Last Login: {userProfile.lastLogin}</Typography>
+                <Typography variant="body2">Status: {profile?.status || 'Active'}</Typography>
               </Stack>
             </Grid>
             <Grid size={{ xs: 'auto' }}>
@@ -130,8 +151,8 @@ export default function UserDashboard() {
                 <Button variant="contained" color="secondary" startIcon={<Add />} onClick={() => router.push('/user/transfer')} sx={{ borderRadius: 2, fontWeight: 700 }}>
                   Quick Transfer
                 </Button>
-                <Button variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)', borderRadius: 2 }}>
-                  Edit Profile
+                <Button variant="outlined" sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)', borderRadius: 2 }} onClick={() => router.push('/user/profile')}>
+                  My Profile
                 </Button>
               </Stack>
             </Grid>
@@ -153,18 +174,18 @@ export default function UserDashboard() {
                   <Box>
                     <Typography variant="caption" color="text.secondary">Total Available Balance</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
-                      <Typography variant="h3" fontWeight="900" color="primary">{accounts[0].currency} {accounts[0].balance}</Typography>
+                      <Typography variant="h3" fontWeight="900" color="primary">₹ {primaryAccount.balance}</Typography>
                     </Box>
                   </Box>
 
                   <Stack direction="row" spacing={2}>
                     <Box sx={{ flex: 1, p: 2, bgcolor: '#e8f5e9', borderRadius: 2 }}>
-                      <Typography variant="caption" color="success.main" fontWeight="bold">Income (Jan)</Typography>
-                      <Typography variant="h6" fontWeight="bold" color="success.dark">+{accounts[0].currency}{accounts[0].income}</Typography>
+                      <Typography variant="caption" color="success.main" fontWeight="bold">Type</Typography>
+                      <Typography variant="subtitle1" fontWeight="bold" color="success.dark">{primaryAccount.accountType}</Typography>
                     </Box>
                     <Box sx={{ flex: 1, p: 2, bgcolor: '#ffebee', borderRadius: 2 }}>
-                      <Typography variant="caption" color="error.main" fontWeight="bold">Spent (Jan)</Typography>
-                      <Typography variant="h6" fontWeight="bold" color="error.dark">-{accounts[0].currency}{accounts[0].expense}</Typography>
+                      <Typography variant="caption" color="error.main" fontWeight="bold">Currency</Typography>
+                      <Typography variant="subtitle1" fontWeight="bold" color="error.dark">{primaryAccount.currency}</Typography>
                     </Box>
                   </Stack>
 
@@ -172,24 +193,20 @@ export default function UserDashboard() {
 
                   <List dense sx={{ p: 0 }}>
                     <ListItem sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}><Home fontSize="small" color="primary" /></ListItemIcon>
-                      <ListItemText primary="Branch" secondary={accounts[0].branch} />
-                    </ListItem>
-                    <ListItem sx={{ px: 0 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}><CreditCard fontSize="small" color="primary" /></ListItemIcon>
-                      <ListItemText primary="Account Number" secondary={accounts[0].number} />
+                      <ListItemIcon sx={{ minWidth: 32 }}><AccountBalanceWallet fontSize="small" color="primary" /></ListItemIcon>
+                      <ListItemText primary="Account Number" secondary={primaryAccount.accountNumber} />
                     </ListItem>
                   </List>
                 </Stack>
               </CardContent>
             </Card>
 
-            {/* Loyalty/Services Card */}
+            {/* Services Card */}
             <Card sx={{ borderRadius: 4, bgcolor: 'primary.main', color: 'white' }}>
               <CardContent sx={{ p: 3 }}>
-                <Typography variant="h6" fontWeight="800" gutterBottom>Privilege Member</Typography>
-                <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>You are eligible for pre-approved Home Loans up to ₹ 45 Lakhs!</Typography>
-                <Button variant="contained" color="secondary" fullWidth sx={{ borderRadius: 2, fontWeight: 700 }}>Claim Offer</Button>
+                <Typography variant="h6" fontWeight="800" gutterBottom>Need Assistance?</Typography>
+                <Typography variant="body2" sx={{ opacity: 0.8, mb: 2 }}>Our experts are available 24/7 to help you with your banking needs.</Typography>
+                <Button variant="contained" color="secondary" fullWidth sx={{ borderRadius: 2, fontWeight: 700 }} onClick={() => router.push('/user/services')}>Contact Helpdesk</Button>
               </CardContent>
             </Card>
           </Stack>
@@ -216,12 +233,7 @@ export default function UserDashboard() {
                     <Print fontSize="small" />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Download CSV">
-                  <IconButton size="small" sx={{ border: '1px solid #eee' }}>
-                    <FileDownload fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                <Button size="small" variant="text" color="primary" endIcon={<ArrowForward fontSize="small" />}>View All</Button>
+                <Button size="small" variant="text" color="primary" endIcon={<ArrowForward fontSize="small" />} onClick={() => router.push('/user/history')}>View All</Button>
               </Stack>
             </Box>
 
@@ -234,42 +246,48 @@ export default function UserDashboard() {
                       <TableCell sx={{ fontWeight: 700 }}>Narration</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>Debit</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>Credit</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>Balance</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700 }}>Balance After</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {transactions.map((txn) => (
+                    {userTransactions.length > 0 ? userTransactions.map((txn) => (
                       <TableRow key={txn.id} hover>
-                        <TableCell sx={{ fontSize: '0.8rem' }}>{txn.date}</TableCell>
+                        <TableCell sx={{ fontSize: '0.8rem' }}>{new Date(txn.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ maxWidth: 250, fontSize: '0.85rem' }} noWrap>
-                            {txn.desc}
+                            {txn.description || txn.type}
                           </Typography>
                           <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                            Ref: {txn.ref}
+                            Ref: {txn.reference || txn.id.slice(0, 8)}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
-                          {txn.debit && (
+                          {txn.type === 'DEBIT' && (
                             <Typography variant="body2" fontWeight="700" color="error.main">
-                              -{accounts[0].currency}{txn.debit}
+                              -₹{txn.amount}
                             </Typography>
                           )}
                         </TableCell>
                         <TableCell align="right">
-                          {txn.credit && (
+                          {txn.type === 'CREDIT' && (
                             <Typography variant="body2" fontWeight="700" color="success.main">
-                              +{accounts[0].currency}{txn.credit}
+                              +₹{txn.amount}
                             </Typography>
                           )}
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" fontWeight="600">
-                            {accounts[0].currency}{txn.balance}
+                            ₹{txn.balanceAfter}
                           </Typography>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                          No recent transactions found
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -277,8 +295,8 @@ export default function UserDashboard() {
 
             <Box sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="caption" color="text.secondary">
-                Currently showing most recent 5 transactions. <br />
-                Total <strong>{transactions.length}</strong> records found in this cycle.
+                Currently showing most recent transactions. <br />
+                Total <strong>{userTransactions.length}</strong> records found in this cycle.
               </Typography>
             </Box>
           </Card>

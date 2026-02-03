@@ -17,10 +17,10 @@ import {
   Paper,
   Chip
 } from '@mui/material';
-import { 
-  AccountBalance, 
-  People, 
-  TrendingUp, 
+import {
+  AccountBalance,
+  People,
+  TrendingUp,
   AttachMoney,
   Add
 } from '@mui/icons-material';
@@ -37,11 +37,9 @@ interface BranchInfo {
   id: string;
   name: string;
   ifsc: string;
-  address: {
-    addressLine1: string;
-    city: string;
-    state: string;
-  };
+  city: string;
+  state: string;
+  address: string;
 }
 
 interface RecentTransaction {
@@ -53,7 +51,15 @@ interface RecentTransaction {
   createdAt: string;
 }
 
+import { accountService } from '@/services/account.service';
+import { customerService } from '@/services/customer.service';
+import { branchService } from '@/services/branch.service';
+import { transactionService } from '@/services/transaction.service';
+import { toast } from 'react-toastify';
+import { useRouter } from 'next/navigation';
+
 export default function BranchAdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats>({
     totalAccounts: 0,
     totalCustomers: 0,
@@ -71,37 +77,59 @@ export default function BranchAdminDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const branchId = localStorage.getItem('branchId') || '';
-      
-      const response = await fetch(`/api/dashboard/branch?branchId=${branchId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setBranchInfo(data.data.branch);
-        setStats(data.data.stats);
-        setRecentTransactions(data.data.recentActivity || []);
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const branchId = payload.branchId;
+
+      if (!branchId) {
+        toast.error('Branch associated with this admin not found');
+        setLoading(false);
+        return;
       }
+
+      const [branchRes, accountsRes, customersRes, transactionsRes] = await Promise.all([
+        branchService.getBranchById(branchId),
+        accountService.getAccounts({ branchId, limit: 1 }),
+        customerService.getCustomers({ branchId, limit: 1 }),
+        transactionService.getTransactions({ branchId, limit: 5 })
+      ]);
+
+      setBranchInfo(branchRes.data);
+      setStats({
+        totalAccounts: accountsRes.data.total || 0,
+        totalCustomers: customersRes.data.total || 0,
+        totalBalance: '0.00', // Need dynamic balance aggregation if backend supports it
+        totalStaff: 0, // Need staff service
+        todayTransactions: transactionsRes.data.total || 0
+      });
+      setRecentTransactions(transactionsRes.data.data.map((txn: any) => ({
+        id: txn.id,
+        txnRef: txn.reference || txn.id.slice(0, 8),
+        type: txn.type,
+        amount: txn.amount,
+        status: txn.status,
+        createdAt: txn.createdAt
+      })));
+
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      toast.error('Failed to load branch dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
   const StatCard = ({ title, value, icon, color }: any) => (
-    <Card>
+    <Card sx={{ height: '100%' }}>
       <CardContent>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box>
             <Typography color="textSecondary" gutterBottom variant="body2">
               {title}
             </Typography>
-            <Typography variant="h4" component="h2">
+            <Typography variant="h4" component="h2" fontWeight="bold">
               {value}
             </Typography>
           </Box>
@@ -114,34 +142,35 @@ export default function BranchAdminDashboard() {
   );
 
   if (loading) {
-    return <Typography>Loading...</Typography>;
+    return <Typography sx={{ m: 4 }}>Loading branch analytics...</Typography>;
   }
 
   return (
     <Box>
       {/* Header */}
       <Box mb={3}>
-        <Typography variant="h4" gutterBottom>
-          Branch Dashboard
+        <Typography variant="h4" fontWeight="bold" gutterBottom color="primary">
+          Branch Control Center
         </Typography>
         {branchInfo && (
-          <Typography variant="body1" color="textSecondary">
-            {branchInfo.name} - {branchInfo.ifsc} | {branchInfo.address.city}, {branchInfo.address.state}
+          <Typography variant="body1" color="textSecondary" sx={{ bgcolor: 'white', p: 1, borderRadius: 1, display: 'inline-block', border: '1px solid #eee' }}>
+            <AccountBalance sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-bottom' }} />
+            {branchInfo.name} | IFSC: {branchInfo.ifsc} | {branchInfo.city}, {branchInfo.state}
           </Typography>
         )}
       </Box>
 
       {/* Stats Cards */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Total Accounts"
+            title="Active Accounts"
             value={stats.totalAccounts}
             icon={<AccountBalance fontSize="large" />}
             color="primary.main"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="Total Customers"
             value={stats.totalCustomers}
@@ -149,25 +178,17 @@ export default function BranchAdminDashboard() {
             color="secondary.main"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Total Balance"
+            title="Branch Deposits"
             value={`₹${stats.totalBalance}`}
             icon={<AttachMoney fontSize="large" />}
             color="success.main"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title="Staff Members"
-            value={stats.totalStaff}
-            icon={<People fontSize="large" />}
-            color="info.main"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={2.4}>
-          <StatCard
-            title="Today's Transactions"
+            title="Today's Activity"
             value={stats.todayTransactions}
             icon={<TrendingUp fontSize="large" />}
             color="warning.main"
@@ -177,58 +198,75 @@ export default function BranchAdminDashboard() {
 
       {/* Quick Actions */}
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} md={6}>
-          <Card>
+        <Grid size={{ xs: 12, md: 5 }}>
+          <Card sx={{ height: '100%', borderRadius: 3 }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Quick Actions
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Operations Registry
               </Typography>
-              <Box display="flex" gap={2} flexWrap="wrap">
-                <Button variant="contained" startIcon={<Add />}>
-                  New Account
+              <Box display="flex" gap={2} flexWrap="wrap" mt={2}>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  fullWidth
+                  onClick={() => router.push('/branch-admin/accounts/create')}
+                  sx={{ borderRadius: 2, py: 1.5, bgcolor: 'primary.main' }}
+                >
+                  Create New Bank Account
                 </Button>
-                <Button variant="outlined" startIcon={<Add />}>
-                  New Customer
-                </Button>
-                <Button variant="outlined" startIcon={<Add />}>
-                  Add Staff
+                <Button
+                  variant="outlined"
+                  startIcon={<People />}
+                  fullWidth
+                  sx={{ borderRadius: 2, py: 1.5 }}
+                >
+                  Onboard New Customer
                 </Button>
               </Box>
             </CardContent>
           </Card>
         </Grid>
-        
-        <Grid item xs={12} md={6}>
-          <Card>
+
+        <Grid size={{ xs: 12, md: 7 }}>
+          <Card sx={{ height: '100%', borderRadius: 3 }}>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Transactions
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Live Transaction Feed
               </Typography>
               <TableContainer>
                 <Table size="small">
                   <TableHead>
-                    <TableRow>
-                      <TableCell>Ref</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Status</TableCell>
+                    <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Reference</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Action</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }} align="center">Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {recentTransactions.slice(0, 5).map((txn) => (
-                      <TableRow key={txn.id}>
-                        <TableCell>{txn.txnRef}</TableCell>
-                        <TableCell>{txn.type}</TableCell>
-                        <TableCell>₹{txn.amount}</TableCell>
+                    {recentTransactions.length > 0 ? recentTransactions.map((txn) => (
+                      <TableRow key={txn.id} hover>
+                        <TableCell sx={{ fontSize: '0.85rem' }}>{txn.txnRef}</TableCell>
                         <TableCell>
-                          <Chip 
-                            label={txn.status} 
+                          <Chip label={txn.type} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>₹{txn.amount}</TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={txn.status}
                             size="small"
-                            color={txn.status === 'SUCCESS' ? 'success' : 'default'}
+                            color={txn.status === 'COMPLETED' ? 'success' : txn.status === 'PENDING' ? 'warning' : 'error'}
+                            sx={{ minWidth: 80, fontSize: '0.7rem' }}
                           />
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                          No transaction records found for this branch.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>

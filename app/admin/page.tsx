@@ -8,26 +8,57 @@ import {
     WarningAmber,
     ArrowForward,
     AccountBalanceWallet,
-    AttachMoney
+    AttachMoney,
+    AccountBalance
 } from '@mui/icons-material';
-
-// Classic Stats Data
-const stats = [
-    { title: 'Total Customers', value: '14,230', change: '+124 this week', icon: <GroupAdd fontSize="medium" color="primary" />, color: '#e3f2fd' },
-    { title: 'Total Deposits', value: '₹ 45.2 Cr', change: '+4.5% vs last month', icon: <AccountBalanceWallet fontSize="medium" color="success" />, color: '#e8f5e9' },
-    { title: 'Pending KYC', value: '24', change: 'Action Required', icon: <WarningAmber fontSize="medium" color="warning" />, color: '#fff3e0' },
-    { title: 'Loan Disbursed', value: '₹ 12.5 Cr', change: 'Target: ₹ 15 Cr', icon: <AttachMoney fontSize="medium" color="info" />, color: '#e1f5fe' },
-];
-
-const transactions = [
-    { id: 1, type: 'Deposit', user: 'Rakesh Gupta', amount: '₹ 25,000', status: 'Success', date: '30-Jan-2026' },
-    { id: 2, type: 'Withdrawal', user: 'Anita Roy', amount: '₹ 10,000', status: 'Pending', date: '30-Jan-2026' },
-    { id: 3, type: 'Transfer', user: 'Tech Solutions Ltd', amount: '₹ 1,50,000', status: 'Success', date: '29-Jan-2026' },
-    { id: 4, type: 'Loan EMI', user: 'Vikram Singh', amount: '₹ 15,400', status: 'Failed', date: '29-Jan-2026' },
-    { id: 5, type: 'Deposit', user: 'Suresh Kumar', amount: '₹ 5,000', status: 'Success', date: '29-Jan-2026' },
-];
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { customerService } from '@/services/customer.service';
+import { accountService } from '@/services/account.service';
+import { branchService } from '@/services/branch.service';
+import { transactionService } from '@/services/transaction.service';
+import { toast } from 'react-toastify';
 
 export default function AdminDashboard() {
+    const router = useRouter();
+    const [stats, setStats] = useState([
+        { title: 'Total Customers', value: '0', change: 'Loading...', icon: <GroupAdd fontSize="medium" color="primary" />, color: '#e3f2fd' },
+        { title: 'Total Accounts', value: '0', change: 'Loading...', icon: <AccountBalanceWallet fontSize="medium" color="success" />, color: '#e8f5e9' },
+        { title: 'Total Branches', value: '0', change: 'Loading...', icon: <AccountBalance fontSize="medium" color="warning" />, color: '#fff3e0' },
+        { title: 'Recent Transactions', value: '0', change: 'Loading...', icon: <AttachMoney fontSize="medium" color="info" />, color: '#e1f5fe' },
+    ]);
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const [customersRes, accountsRes, branchesRes, transactionsRes] = await Promise.all([
+                    customerService.getCustomers({ limit: 1 }),
+                    accountService.getAccounts({ limit: 1 }),
+                    branchService.getBranches({ limit: 1 }),
+                    transactionService.getTransactions({ limit: 5 })
+                ]);
+
+                setStats([
+                    { title: 'Total Customers', value: customersRes.data.total?.toString() || '0', change: 'Current active customers', icon: <GroupAdd fontSize="medium" color="primary" />, color: '#e3f2fd' },
+                    { title: 'Total Accounts', value: accountsRes.data.total?.toString() || '0', change: 'Across all branches', icon: <AccountBalanceWallet fontSize="medium" color="success" />, color: '#e8f5e9' },
+                    { title: 'Total Branches', value: branchesRes.data.total?.toString() || '0', change: 'Active service points', icon: <AccountBalance fontSize="medium" color="warning" />, color: '#fff3e0' },
+                    { title: 'Recent Transactions', value: transactionsRes.data.total?.toString() || '0', change: 'Last 24 hours', icon: <AttachMoney fontSize="medium" color="info" />, color: '#e1f5fe' },
+                ]);
+
+                setTransactions(transactionsRes.data.data || []);
+            } catch (error) {
+                console.error('Failed to fetch stats', error);
+                toast.error('Failed to load dashboard metrics');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
     return (
         <Box>
             <Box sx={{ mb: 2 }}>
@@ -44,7 +75,7 @@ export default function AdminDashboard() {
                                 <Box>
                                     <Typography variant="body2" color="text.secondary" fontWeight={500}>{stat.title}</Typography>
                                     <Typography variant="h5" fontWeight="bold" sx={{ my: 0.5 }}>{stat.value}</Typography>
-                                    <Typography variant="caption" sx={{ color: stat.change.includes('Action') ? 'error.main' : 'success.main', fontWeight: 600 }}>
+                                    <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 600 }}>
                                         {stat.change}
                                     </Typography>
                                 </Box>
@@ -57,100 +88,55 @@ export default function AdminDashboard() {
                 ))}
             </Box>
 
-            {/* Main Content Area (Commented out as requested)
-            <Box sx={{ display: 'grid', gridTemplateColumns: { md: '2fr 1fr' }, gap: 2 }}>
-
-                <Card>
-                    <CardContent sx={{ p: 0 }}>
-                        <Box sx={{ p: 2, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="h6">Recent Ledger Entries</Typography>
-                            <Button size="small" variant="text" endIcon={<ArrowForward />}>View All</Button>
-                        </Box>
-                        <TableContainer>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Txn Date</TableCell>
-                                        <TableCell>Customer</TableCell>
-                                        <TableCell>Type</TableCell>
-                                        <TableCell align="right">Amount</TableCell>
-                                        <TableCell align="center">Status</TableCell>
+            {/* Recent Transactions Table */}
+            <Card>
+                <CardContent sx={{ p: 0 }}>
+                    <Box sx={{ p: 2, borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Typography variant="h6">Recent Ledger Entries</Typography>
+                        <Button size="small" variant="text" endIcon={<ArrowForward />} onClick={() => router.push('/admin/transactions')}>View All</Button>
+                    </Box>
+                    <TableContainer>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Txn Date</TableCell>
+                                    <TableCell>Reference</TableCell>
+                                    <TableCell>Type</TableCell>
+                                    <TableCell align="right">Amount</TableCell>
+                                    <TableCell align="center">Status</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {transactions.length > 0 ? transactions.map((row) => (
+                                    <TableRow key={row.id}>
+                                        <TableCell>{new Date(row.createdAt).toLocaleDateString()}</TableCell>
+                                        <TableCell>{row.reference || row.id.slice(0, 8)}</TableCell>
+                                        <TableCell>{row.type}</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 600, color: row.type === 'DEBIT' ? 'error.main' : 'success.main' }}>
+                                            {row.type === 'DEBIT' ? '-' : '+'} ₹{row.amount}
+                                        </TableCell>
+                                        <TableCell align="center">
+                                            <Chip
+                                                label={row.status}
+                                                size="small"
+                                                color={row.status === 'COMPLETED' ? 'success' : row.status === 'PENDING' ? 'warning' : 'error'}
+                                                variant="outlined"
+                                                sx={{ height: 20, fontSize: '0.7rem' }}
+                                            />
+                                        </TableCell>
                                     </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {transactions.map((row) => (
-                                        <TableRow key={row.id}>
-                                            <TableCell>{row.date}</TableCell>
-                                            <TableCell>{row.user}</TableCell>
-                                            <TableCell>{row.type}</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600, color: row.type === 'Withdrawal' ? 'error.main' : 'success.main' }}>
-                                                {row.type === 'Withdrawal' || row.type === 'Loan EMI' ? '-' : '+'} {row.amount}
-                                            </TableCell>
-                                            <TableCell align="center">
-                                                <Chip
-                                                    label={row.status}
-                                                    size="small"
-                                                    color={row.status === 'Success' ? 'success' : row.status === 'Pending' ? 'warning' : 'error'}
-                                                    variant="outlined"
-                                                    sx={{ height: 20, fontSize: '0.7rem' }}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </CardContent>
-                </Card>
-
-                <Stack spacing={2}>
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" sx={{ mb: 2 }}>System Health</Typography>
-                            <Stack spacing={1.5}>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2">Server Status</Typography>
-                                    <Chip label="Online" color="success" size="small" sx={{ height: 20 }} />
-                                </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2">DB Latency</Typography>
-                                    <Typography variant="caption" fontWeight="bold">24ms</Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                                    <Typography variant="body2">Failed Txns (24h)</Typography>
-                                    <Typography variant="caption" color="error" fontWeight="bold">12</Typography>
-                                </Box>
-                            </Stack>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardContent>
-                            <Typography variant="h6" sx={{ mb: 2 }}>Exchange Rates (INR)</Typography>
-                            <Table size="small">
-                                <TableBody>
+                                )) : (
                                     <TableRow>
-                                        <TableCell sx={{ color: 'text.secondary' }}>USD</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>₹ 83.12</TableCell>
-                                        <TableCell align="right" sx={{ color: 'success.main' }}>+0.05%</TableCell>
+                                        <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                                            {loading ? 'Loading transactions...' : 'No recent transactions found'}
+                                        </TableCell>
                                     </TableRow>
-                                    <TableRow>
-                                        <TableCell sx={{ color: 'text.secondary' }}>EUR</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>₹ 90.45</TableCell>
-                                        <TableCell align="right" sx={{ color: 'error.main' }}>-0.12%</TableCell>
-                                    </TableRow>
-                                    <TableRow>
-                                        <TableCell sx={{ color: 'text.secondary' }}>GBP</TableCell>
-                                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>₹ 105.30</TableCell>
-                                        <TableCell align="right" sx={{ color: 'success.main' }}>+0.02%</TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                </Stack>
-            </Box>
-            */}
+                                )}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
+            </Card>
         </Box>
     );
 }

@@ -33,10 +33,12 @@ import {
   Upload,
   PhotoCamera
 } from '@mui/icons-material';
+import { accountService } from '@/services/account.service';
+import { toast } from 'react-toastify';
 
 const steps = [
   'Personal Information',
-  'Contact Details', 
+  'Contact Details',
   'Address Information',
   'Identity Documents',
   'Account Details',
@@ -202,8 +204,10 @@ export default function CreateAccountPage() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      /*
+      // Prepare FormData for file upload if supported by backend
       const submitData = new FormData();
-      
+
       submitData.append('customerData', JSON.stringify({
         firstName: formData.firstName,
         middleName: formData.middleName,
@@ -234,26 +238,51 @@ export default function CreateAccountPage() {
         initialDeposit: parseFloat(formData.initialDeposit),
         nomineeDetails: formData.nomineeDetails
       }));
+      */
 
-      Object.entries(formData.documents).forEach(([key, file]) => {
-        if (file) {
-          submitData.append(key, file);
-        }
-      });
+      // Using JSON payload for now as per current backend capability (assuming files are handled separately or not yet supported)
+      // If backend supports FormData, we should switch back to FormData.
+      // Checking account.service.ts, it uses apiHelper which sends JSON by default for data.
 
-      const response = await fetch('/api/accounts/create-with-customer', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+      const payload = {
+        customer: {
+          firstName: formData.firstName,
+          middleName: formData.middleName,
+          lastName: formData.lastName,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          maritalStatus: formData.maritalStatus,
+          nationality: formData.nationality,
+          occupation: formData.occupation,
+          annualIncome: parseFloat(formData.annualIncome),
+          email: formData.email,
+          phone: formData.phone,
+          alternatePhone: formData.alternatePhone,
+          aadharNumber: formData.aadharNumber,
+          panNumber: formData.panNumber,
+          passportNumber: formData.passportNumber,
+          drivingLicenseNumber: formData.drivingLicenseNumber,
+          emergencyContactName: formData.emergencyContactName,
+          emergencyContactPhone: formData.emergencyContactPhone,
+          emergencyContactRelation: formData.emergencyContactRelation,
+          permanentAddress: formData.permanentAddress,
+          currentAddress: formData.sameAsPermanent ? formData.permanentAddress : formData.currentAddress,
+          branchId: localStorage.getItem('branchId')
         },
-        body: submitData
-      });
+        account: {
+          accountType: formData.accountType,
+          initialDeposit: parseFloat(formData.initialDeposit),
+          nomineeDetails: formData.nomineeDetails
+        }
+      };
 
-      if (response.ok) {
-        alert('Account created successfully!');
-      }
-    } catch (error) {
+      await accountService.createAccountWithCustomer(payload);
+      toast.success('Account created successfully!');
+      // Reset form or redirect
+    } catch (error: any) {
       console.error('Failed to create account:', error);
+      const errorMessage = error?.response?.data?.message || 'Failed to create account. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -307,7 +336,7 @@ export default function CreateAccountPage() {
           >
             Back
           </Button>
-          
+
           {activeStep === steps.length - 1 ? (
             <Button
               onClick={handleSubmit}
@@ -339,9 +368,9 @@ function PersonalInfoStep({ formData, setFormData }: any) {
           <Person sx={{ mr: 1 }} />
           <Typography variant="h6">Personal Information</Typography>
         </Box>
-        
+
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="First Name *"
               value={formData.firstName}
@@ -350,7 +379,7 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Middle Name"
               value={formData.middleName}
@@ -358,7 +387,7 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Last Name *"
               value={formData.lastName}
@@ -367,8 +396,8 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Date of Birth *"
               type="date"
@@ -379,8 +408,8 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               InputLabelProps={{ shrink: true }}
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth required>
               <InputLabel>Gender</InputLabel>
               <Select
@@ -393,8 +422,8 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               </Select>
             </FormControl>
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Marital Status</InputLabel>
               <Select
@@ -408,8 +437,8 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               </Select>
             </FormControl>
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Nationality"
               value={formData.nationality}
@@ -417,8 +446,8 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Occupation"
               value={formData.occupation}
@@ -426,8 +455,8 @@ function PersonalInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Annual Income (₹)"
               type="number"
@@ -450,9 +479,9 @@ function ContactInfoStep({ formData, setFormData }: any) {
           <ContactPhone sx={{ mr: 1 }} />
           <Typography variant="h6">Contact Information</Typography>
         </Box>
-        
+
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Email Address *"
               type="email"
@@ -462,8 +491,8 @@ function ContactInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Phone Number *"
               value={formData.phone}
@@ -472,8 +501,8 @@ function ContactInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Alternate Phone"
               value={formData.alternatePhone}
@@ -481,13 +510,13 @@ function ContactInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12}>
+
+          <Grid size={{ xs: 12 }}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1" gutterBottom>Emergency Contact</Typography>
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Emergency Contact Name"
               value={formData.emergencyContactName}
@@ -495,8 +524,8 @@ function ContactInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Emergency Contact Phone"
               value={formData.emergencyContactPhone}
@@ -504,8 +533,8 @@ function ContactInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Relation"
               value={formData.emergencyContactRelation}
@@ -543,10 +572,10 @@ function AddressInfoStep({ formData, setFormData }: any) {
           <Home sx={{ mr: 1 }} />
           <Typography variant="h6">Address Information</Typography>
         </Box>
-        
+
         <Typography variant="subtitle1" gutterBottom>Permanent Address</Typography>
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Address Line 1 *"
               value={formData.permanentAddress.addressLine1}
@@ -558,8 +587,8 @@ function AddressInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          
-          <Grid item xs={12}>
+
+          <Grid size={{ xs: 12 }}>
             <TextField
               label="Address Line 2"
               value={formData.permanentAddress.addressLine2}
@@ -570,8 +599,8 @@ function AddressInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Landmark"
               value={formData.permanentAddress.landmark}
@@ -582,8 +611,8 @@ function AddressInfoStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="City *"
               value={formData.permanentAddress.city}
@@ -595,8 +624,8 @@ function AddressInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="State *"
               value={formData.permanentAddress.state}
@@ -608,8 +637,8 @@ function AddressInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Pincode *"
               value={formData.permanentAddress.pincode}
@@ -621,8 +650,8 @@ function AddressInfoStep({ formData, setFormData }: any) {
               required
             />
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Country"
               value={formData.permanentAddress.country}
@@ -634,7 +663,7 @@ function AddressInfoStep({ formData, setFormData }: any) {
             />
           </Grid>
         </Grid>
-        
+
         <FormControlLabel
           control={
             <Checkbox
@@ -657,9 +686,9 @@ function IdentityDocumentsStep({ formData, setFormData }: any) {
           <Description sx={{ mr: 1 }} />
           <Typography variant="h6">Identity Documents</Typography>
         </Box>
-        
+
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Aadhar Number *"
               value={formData.aadharNumber}
@@ -669,8 +698,8 @@ function IdentityDocumentsStep({ formData, setFormData }: any) {
               inputProps={{ maxLength: 12 }}
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="PAN Number *"
               value={formData.panNumber}
@@ -680,8 +709,8 @@ function IdentityDocumentsStep({ formData, setFormData }: any) {
               inputProps={{ maxLength: 10 }}
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Passport Number"
               value={formData.passportNumber}
@@ -689,8 +718,8 @@ function IdentityDocumentsStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Driving License Number"
               value={formData.drivingLicenseNumber}
@@ -712,9 +741,9 @@ function AccountDetailsStep({ formData, setFormData }: any) {
           <AccountBalance sx={{ mr: 1 }} />
           <Typography variant="h6">Account Details</Typography>
         </Box>
-        
+
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth required>
               <InputLabel>Account Type</InputLabel>
               <Select
@@ -726,8 +755,8 @@ function AccountDetailsStep({ formData, setFormData }: any) {
               </Select>
             </FormControl>
           </Grid>
-          
-          <Grid item xs={12} sm={6}>
+
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               label="Initial Deposit (₹) *"
               type="number"
@@ -738,13 +767,13 @@ function AccountDetailsStep({ formData, setFormData }: any) {
               inputProps={{ min: 1000 }}
             />
           </Grid>
-          
-          <Grid item xs={12}>
+
+          <Grid size={{ xs: 12 }}>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1" gutterBottom>Nominee Details</Typography>
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Nominee Name"
               value={formData.nomineeDetails.name}
@@ -755,8 +784,8 @@ function AccountDetailsStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Relation"
               value={formData.nomineeDetails.relation}
@@ -767,8 +796,8 @@ function AccountDetailsStep({ formData, setFormData }: any) {
               fullWidth
             />
           </Grid>
-          
-          <Grid item xs={12} sm={4}>
+
+          <Grid size={{ xs: 12, sm: 4 }}>
             <TextField
               label="Nominee Phone"
               value={formData.nomineeDetails.phone}
@@ -802,15 +831,15 @@ function DocumentUploadStep({ formData, onFileUpload }: any) {
           <Upload sx={{ mr: 1 }} />
           <Typography variant="h6">Document Upload</Typography>
         </Box>
-        
+
         <Grid container spacing={3}>
           {documentTypes.map((doc) => (
-            <Grid item xs={12} sm={6} key={doc.key}>
+            <Grid size={{ xs: 12, sm: 6 }} key={doc.key}>
               <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
                 <Typography variant="subtitle2" gutterBottom>
                   {doc.label} {doc.required && '*'}
                 </Typography>
-                
+
                 {formData.documents[doc.key] ? (
                   <Box>
                     <Chip
@@ -843,7 +872,7 @@ function DocumentUploadStep({ formData, onFileUpload }: any) {
             </Grid>
           ))}
         </Grid>
-        
+
         <Alert severity="info" sx={{ mt: 3 }}>
           Please ensure all documents are clear and readable. Accepted formats: JPG, PNG, PDF (Max 5MB each)
         </Alert>

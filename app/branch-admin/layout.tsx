@@ -1,8 +1,10 @@
 'use client';
 
-import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, CssBaseline } from '@mui/material';
-import { Dashboard, AccountBalance, SwapHoriz, People, Group } from '@mui/icons-material';
+import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, CssBaseline, IconButton } from '@mui/material';
+import { Dashboard, AccountBalance, SwapHoriz, People, Group, Logout } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { authService } from '@/services/auth.service';
 
 const drawerWidth = 240;
 
@@ -22,49 +24,58 @@ export default function BranchAdminLayout({
   const pathname = usePathname();
   const router = useRouter();
 
+  const handleLogout = () => {
+    authService.logout();
+  };
+
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            Branch Admin Dashboard
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
-        }}
-      >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto' }}>
-          <List>
-            {menuItems.map((item) => (
-              <ListItem
-                key={item.text}
-                onClick={() => router.push(item.path)}
-                sx={{
-                  cursor: 'pointer',
-                  backgroundColor: pathname === item.path ? 'action.selected' : 'transparent',
-                }}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
-              </ListItem>
-            ))}
-          </List>
+    <ProtectedRoute requiredRole="branch_admin">
+      <Box sx={{ display: 'flex' }}>
+        <CssBaseline />
+        <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+          <Toolbar sx={{ justifyContent: 'space-between' }}>
+            <Typography variant="h6" noWrap component="div">
+              Branch Admin Dashboard
+            </Typography>
+            <IconButton color="inherit" onClick={handleLogout}>
+              <Logout />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+
+        <Drawer
+          variant="permanent"
+          sx={{
+            width: drawerWidth,
+            flexShrink: 0,
+            [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+          }}
+        >
+          <Toolbar />
+          <Box sx={{ overflow: 'auto' }}>
+            <List>
+              {menuItems.map((item) => (
+                <ListItem
+                  key={item.text}
+                  onClick={() => router.push(item.path)}
+                  sx={{
+                    cursor: 'pointer',
+                    backgroundColor: pathname === item.path ? 'action.selected' : 'transparent',
+                  }}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        </Drawer>
+
+        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+          <Toolbar />
+          {children}
         </Box>
-      </Drawer>
-      
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Toolbar />
-        {children}
       </Box>
-    </Box>
+    </ProtectedRoute>
   );
 }
