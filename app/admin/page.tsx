@@ -40,14 +40,44 @@ export default function AdminDashboard() {
                     transactionService.getTransactions({ limit: 5 })
                 ]);
 
+                // Extract data from ResponseHelper format
+                const customersData = customersRes?.data || customersRes;
+                const accountsData = accountsRes?.data || accountsRes;
+                const branchesData = branchesRes?.data || branchesRes;
+                const transactionsData = transactionsRes?.data || transactionsRes;
+
                 setStats([
-                    { title: 'Total Customers', value: customersRes.data.total?.toString() || '0', change: 'Current active customers', icon: <GroupAdd fontSize="medium" color="primary" />, color: '#e3f2fd' },
-                    { title: 'Total Accounts', value: accountsRes.data.total?.toString() || '0', change: 'Across all branches', icon: <AccountBalanceWallet fontSize="medium" color="success" />, color: '#e8f5e9' },
-                    { title: 'Total Branches', value: branchesRes.data.total?.toString() || '0', change: 'Active service points', icon: <AccountBalance fontSize="medium" color="warning" />, color: '#fff3e0' },
-                    { title: 'Recent Transactions', value: transactionsRes.data.total?.toString() || '0', change: 'Last 24 hours', icon: <AttachMoney fontSize="medium" color="info" />, color: '#e1f5fe' },
+                    {
+                        title: 'Total Customers',
+                        value: customersData?.total?.toString() || customersData?.length?.toString() || '0',
+                        change: 'Current active customers',
+                        icon: <GroupAdd fontSize="medium" color="primary" />,
+                        color: '#e3f2fd'
+                    },
+                    {
+                        title: 'Total Accounts',
+                        value: accountsData?.total?.toString() || accountsData?.length?.toString() || '0',
+                        change: 'Across all branches',
+                        icon: <AccountBalanceWallet fontSize="medium" color="success" />,
+                        color: '#e8f5e9'
+                    },
+                    {
+                        title: 'Total Branches',
+                        value: branchesData?.total?.toString() || branchesData?.length?.toString() || '0',
+                        change: 'Active service points',
+                        icon: <AccountBalance fontSize="medium" color="warning" />,
+                        color: '#fff3e0'
+                    },
+                    {
+                        title: 'Recent Transactions',
+                        value: transactionsData?.total?.toString() || transactionsData?.length?.toString() || '0',
+                        change: 'Last 24 hours',
+                        icon: <AttachMoney fontSize="medium" color="info" />,
+                        color: '#e1f5fe'
+                    },
                 ]);
 
-                setTransactions(transactionsRes.data.data || []);
+                setTransactions(transactionsData?.data || transactionsData || []);
             } catch (error) {
                 console.error('Failed to fetch stats', error);
                 toast.error('Failed to load dashboard metrics');

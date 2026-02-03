@@ -33,11 +33,28 @@ export default function TransferPage() {
 
     const fetchAccounts = async () => {
         try {
-            const data: any = await accountService.getAccounts(); // Adjust if API is different
-            // If the API returns a paginated response or wrapped object, extract the array
-            // Based on previous file views, it seems apiHelper returns response.data directly
-            // But let's be safe. If it is an array use it, else check for data property
-            const accountList = Array.isArray(data) ? data : (data.data || []);
+            const response: any = await accountService.getAccounts();
+            // Handle ResponseHelper format: { success: true, data: {...}, message: '...' }
+            // The data might be paginated: { data: [...], total: X, page: Y, limit: Z }
+            // Or it might be a direct array
+            let accountList: any[] = [];
+
+            if (response?.data) {
+                // If response has a data property
+                if (Array.isArray(response.data)) {
+                    accountList = response.data;
+                } else if (response.data.data && Array.isArray(response.data.data)) {
+                    // Paginated response
+                    accountList = response.data.data;
+                } else if (typeof response.data === 'object') {
+                    // Single object wrapped in data
+                    accountList = [response.data];
+                }
+            } else if (Array.isArray(response)) {
+                // Direct array response
+                accountList = response;
+            }
+
             setAccounts(accountList);
             if (accountList.length > 0) {
                 setTransferData(prev => ({ ...prev, fromAccountId: accountList[0].id }));
